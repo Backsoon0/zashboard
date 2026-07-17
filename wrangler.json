@@ -8,6 +8,9 @@
     "directory": "./dist",
     "binding": "ASSETS"
   },
+  "vars": {
+    "FONT": "all"
+  },
   "observability": {
     "enabled": true
   }
