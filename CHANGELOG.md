@@ -2,6 +2,34 @@
 
 # Changelog
 
+## [3.16.1](https://github.com/Zephyruso/zashboard/compare/v3.16.0...v3.16.1) (2026-07-31)
+
+
+### Bug Fixes
+
+* prevent clear button from submitting the enclosing form ([0fb5daf](https://github.com/Zephyruso/zashboard/commit/0fb5daf369f0c61d0bb41e989b6c8a08904f5e3c)), closes [#591](https://github.com/Zephyruso/zashboard/issues/591)
+* **singbox:** test individual outbound from proxy card ([b4fc4fa](https://github.com/Zephyruso/zashboard/commit/b4fc4fabe7141ee3424e3575b4ef772bf8bbfd7d))
+* **singbox:** wait for pushed latency results ([51d3327](https://github.com/Zephyruso/zashboard/commit/51d3327714478dce8a9c08c1ef5f79b96178a751))
+* update sing-box icon ([29e2516](https://github.com/Zephyruso/zashboard/commit/29e251637f4d76db7141dedb9da938bb244cd824))
+
+## [3.16.0](https://github.com/Zephyruso/zashboard/compare/v3.15.0...v3.16.0) (2026-07-22)
+
+
+### Features
+
+* add "don't ask again" option to settings override confirm ([af704c2](https://github.com/Zephyruso/zashboard/commit/af704c211ae611e125c06c2f850a101eafd752f0)), closes [#728](https://github.com/Zephyruso/zashboard/issues/728)
+* align with the upstream sing-box API ([f90e9e7](https://github.com/Zephyruso/zashboard/commit/f90e9e77236af98f7c0d6321f615c83184f1f40f))
+
+
+### Bug Fixes
+
+* stop backend streams when active backend is cleared ([#724](https://github.com/Zephyruso/zashboard/issues/724)) ([6676351](https://github.com/Zephyruso/zashboard/commit/66763518d462326c031561995aed2feb10c09335))
+
+
+### Performance Improvements
+
+* overhaul connections page hot path ([#727](https://github.com/Zephyruso/zashboard/issues/727)) ([d6211f2](https://github.com/Zephyruso/zashboard/commit/d6211f21cf3649909a227963e75bced36d3af9c0))
+
 ## [3.15.0](https://github.com/Zephyruso/zashboard/compare/v3.14.0...v3.15.0) (2026-07-10)
 
 
