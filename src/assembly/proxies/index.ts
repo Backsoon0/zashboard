@@ -1,14 +1,14 @@
 // 组装层 · proxies 门面。
-// 持有两种后端(clash / sing-box native)共用的代理「视图状态」与纯读取 helper,
-// 并按后端类型路由到 clash(拉取式)/ singbox(流驱动)的组装实现。
-import { isSingboxBackend } from '@/assembly/backend'
-import { isSingBoxCore } from '@/assembly/version'
+// 持有代理的「视图状态」与纯读取 helper,拉取与动作转交 clash 组装实现。
+import { can } from '@/assembly/backend'
 import { NOT_CONNECTED, PROXY_TAB_TYPE, PROXY_TYPE, TEST_URL } from '@/constant'
+import { notifyRequestError } from '@/helper/requestError'
+import { useStorage } from '@/helper/storage'
 import { groupTestUrls, independentLatencyTest, speedtestUrl } from '@/store/settings'
 import type { Proxy, ProxyProvider } from '@/types'
-import { useStorage } from '@vueuse/core'
 import { last } from 'lodash'
 import { computed, ref } from 'vue'
+import * as clash from './clash'
 
 export const proxiesFilter = ref('')
 export const proxiesTabShow = ref(PROXY_TAB_TYPE.PROXIES)
@@ -51,7 +51,7 @@ export const getLatencyByName = (proxyName: string, groupName?: string) => {
 }
 
 export const getHistoryByName = (proxyName: string, groupName?: string) => {
-  if (independentLatencyTest.value && !isSingBoxCore.value) {
+  if (groupName && independentLatencyTest.value && can('independentLatency')) {
     const proxyNode = proxyMap.value[proxyName]
     const url = getTestUrl(groupName)
 
@@ -60,7 +60,9 @@ export const getHistoryByName = (proxyName: string, groupName?: string) => {
     }
 
     if (!proxyNode?.extra) {
-      proxyNode.extra = {}
+      const nowNode = proxyMap.value[getNowProxyNodeName(proxyName)]
+
+      return nowNode?.history
     }
 
     if (!proxyNode.extra?.[url]) {
@@ -130,48 +132,28 @@ export const hasSmartGroup = computed(() => {
 
 // ---------- 按后端路由的组装动作 ----------
 
-interface ProxiesBackend {
-  fetchProxies: () => Promise<unknown>
-  handlerProxySelect: (proxyGroupName: string, proxyName: string) => Promise<unknown>
-  proxyLatencyTest: (
-    proxyName: string,
-    url?: string,
-    timeout?: number,
-    groupName?: string,
-  ) => Promise<unknown>
-  proxyGroupLatencyTest: (proxyGroupName: string) => Promise<unknown>
-  allProxiesLatencyTest: () => Promise<unknown>
+export const fetchProxies = () => clash.fetchProxies()
+
+// 切换节点只会由用户点击触发,且调用点都是模板里的 @click(没有 catch 的落点),
+// 所以在门面里兜住:失败弹提示,否则 UI 会停在旧选择上一声不吭。
+export const handlerProxySelect = async (proxyGroupName: string, proxyName: string) => {
+  try {
+    return await clash.handlerProxySelect(proxyGroupName, proxyName)
+  } catch (e) {
+    notifyRequestError(e)
+  }
 }
 
-const load = (): Promise<ProxiesBackend> =>
-  isSingboxBackend.value ? import('./singbox') : import('./clash')
+export const proxyLatencyTest = (proxyName: string, url?: string, timeout?: number) =>
+  clash.proxyLatencyTest(proxyName, url, timeout)
 
-export const fetchProxies = async () => (await load()).fetchProxies()
+export const proxyGroupLatencyTest = (proxyGroupName: string) =>
+  clash.proxyGroupLatencyTest(proxyGroupName)
 
-export const handlerProxySelect = async (proxyGroupName: string, proxyName: string) =>
-  (await load()).handlerProxySelect(proxyGroupName, proxyName)
-
-export const proxyLatencyTest = async (
-  proxyName: string,
-  url?: string,
-  timeout?: number,
-  groupName?: string,
-) => (await load()).proxyLatencyTest(proxyName, url, timeout, groupName)
-
-export const proxyGroupLatencyTest = async (proxyGroupName: string) =>
-  (await load()).proxyGroupLatencyTest(proxyGroupName)
-
-export const allProxiesLatencyTest = async () => (await load()).allProxiesLatencyTest()
-
-// 后端切换 / 登出时丢弃 sing-box 订阅(clash 无需处理)。
-export const resetProxies = async () => {
-  const m = await import('./singbox')
-  m.resetProxies()
-}
+export const allProxiesLatencyTest = () => clash.allProxiesLatencyTest()
 
 // 代理集 / smart 权重动作(Clash 专属),经 proxies 域门面暴露给 view 与 store/smart。
 export {
-  fetchSmartGroupWeightsAPI,
   fetchSmartWeightsAPI,
   flushSmartGroupWeightsAPI,
   proxyProviderHealthCheckAPI,

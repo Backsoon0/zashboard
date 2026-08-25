@@ -132,7 +132,7 @@
           <div class="join flex-1">
             <TextInput
               v-model="importSettingsUrl"
-              class="max-w-none flex-1"
+              class="join-item max-w-none flex-1"
             />
             <button
               class="btn btn-sm join-item"
@@ -205,7 +205,7 @@
 
 <script setup lang="ts">
 import { deleteStorageAPI, setStorageAPI } from '@/assembly/storage'
-import { isSingBoxCore } from '@/assembly/version'
+import { can } from '@/assembly/backend'
 import {
   autoImportSettings,
   autoSyncSettings,
@@ -217,7 +217,8 @@ import {
   syncSettingsFromCore,
 } from '@/helper/autoImportSettings'
 import { LOCAL_IMAGE } from '@/helper/indexeddb'
-import { showNotification } from '@/helper/notification'
+import { dismissNotification, notifyActionPending, showNotification } from '@/helper/notification'
+import { notifyRequestError } from '@/helper/requestError'
 import { useTooltip } from '@/helper/tooltip'
 import {
   applyDashboardSettingsToStorage,
@@ -225,7 +226,7 @@ import {
   getDashboardSettingsFromStorage,
   resetSettings,
 } from '@/helper/utils'
-import { customBackgroundURL, displayAllFeatures } from '@/store/settings'
+import { customBackgroundURL } from '@/store/settings'
 import {
   ArrowDownCircleIcon,
   ArrowDownTrayIcon,
@@ -253,7 +254,7 @@ withDefaults(
 const inputRef = ref<HTMLInputElement>()
 const dashboardSettingsDialogShow = ref(false)
 const isStorageSubmitting = ref(false)
-const showSyncSettings = computed(() => !isSingBoxCore.value || displayAllFeatures.value)
+const showSyncSettings = computed(() => can('syncSettings'))
 
 const { showTip } = useTooltip()
 const { t } = useI18n()
@@ -291,6 +292,8 @@ const handlerClickUploadSettings = async () => {
   if (isStorageSubmitting.value) return
 
   isStorageSubmitting.value = true
+  // 弹窗一关按钮就没了,结果回来之前得有条提示顶着。
+  const notifyKey = notifyActionPending('uploadSettings')
   try {
     dashboardSettingsDialogShow.value = false
     const settings = getDashboardSettingsFromStorage()
@@ -307,6 +310,7 @@ const handlerClickUploadSettings = async () => {
 
     await setStorageAPI(settings)
     showNotification({
+      key: notifyKey,
       content: 'uploadSettingsSuccess',
       type: 'alert-success',
     })
@@ -316,6 +320,8 @@ const handlerClickUploadSettings = async () => {
         type: 'alert-warning',
       })
     }
+  } catch (e) {
+    notifyRequestError(e, notifyKey)
   } finally {
     isStorageSubmitting.value = false
   }
@@ -325,12 +331,17 @@ const handlerClickSyncSettings = async () => {
   if (isStorageSubmitting.value) return
 
   isStorageSubmitting.value = true
+  const notifyKey = notifyActionPending('syncSettings')
   try {
     dashboardSettingsDialogShow.value = false
     await syncSettingsFromCore({
       force: true,
       notify: true,
     })
+    // 同步自己会弹成功提示(或因无变化/用户取消而什么都不做),这里只负责收掉「执行中」。
+    dismissNotification(notifyKey)
+  } catch (e) {
+    notifyRequestError(e, notifyKey)
   } finally {
     isStorageSubmitting.value = false
   }
@@ -341,18 +352,23 @@ const handlerClickDeleteUploadedSettings = async () => {
   if (!window.confirm(t('deleteUploadedSettingsConfirm'))) return
 
   isStorageSubmitting.value = true
+  const notifyKey = notifyActionPending('deleteUploadedSettings')
   try {
     await deleteStorageAPI()
     dashboardSettingsDialogShow.value = false
     showNotification({
+      key: notifyKey,
       content: 'deleteUploadedSettingsSuccess',
       type: 'alert-success',
     })
+  } catch (e) {
+    notifyRequestError(e, notifyKey)
   } finally {
     isStorageSubmitting.value = false
   }
 }
 
+// 用户刚打开「自动同步」开关,等同于一次手动同步,失败要说明原因。
 watch(autoSyncSettings, async (value, oldValue) => {
   if (!value || oldValue || isStorageSubmitting.value) return
 
@@ -360,6 +376,8 @@ watch(autoSyncSettings, async (value, oldValue) => {
   try {
     dashboardSettingsDialogShow.value = false
     await syncSettingsFromCore()
+  } catch (e) {
+    notifyRequestError(e)
   } finally {
     isStorageSubmitting.value = false
   }

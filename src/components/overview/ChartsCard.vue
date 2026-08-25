@@ -16,7 +16,7 @@
             :data="uploadSpeedHistory"
             :y-axis-floor="60000"
             :window-seconds="timeSaved"
-            color="info"
+            color="secondary"
             :name="t('upload')"
             :label-formatter="speedLabelFormatter"
             :tooltip-formatter="speedTooltipFormatter"
@@ -51,11 +51,8 @@
       <div
         class="charts-card-connections bg-base-200/30 col-span-2 flex flex-col gap-1.5 rounded-xl p-4"
       >
-        <div
-          class="text-base-content/60 flex items-center gap-2 text-xs font-semibold tracking-wider uppercase"
-        >
+        <div class="text-base-content/60 text-xs font-semibold tracking-wider uppercase">
           {{ $t('connections') }}
-          <span class="bg-success inline-block h-1.5 w-1.5 rounded-full" />
         </div>
         <div class="text-3xl font-extralight tabular-nums">
           {{ connectionCount }}
@@ -72,7 +69,6 @@
         </div>
         <div class="text-base-content/50 flex items-center justify-between gap-2 text-xs">
           <span>{{ $t('memoryUsage') }} {{ memoryStr }}</span>
-          <span v-if="hasSingboxChannel">{{ $t('goroutines') }} {{ goroutines }}</span>
         </div>
       </div>
     </div>
@@ -86,14 +82,12 @@ import {
   formatTimeSeriesTooltipParam,
 } from '@/components/charts/chartTooltip'
 import type { ChartTooltipParam } from '@/components/charts/chartTypes'
-import { hasSingboxChannel } from '@/assembly/backend'
 import { prettyBytesHelper } from '@/helper/utils'
 import { activeConnections, downloadTotal, uploadTotal } from '@/store/connections'
 import {
   connectionsHistory,
   downloadSpeed,
   downloadSpeedHistory,
-  goroutines,
   memory,
   timeSaved,
   uploadSpeed,

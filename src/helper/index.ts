@@ -1,4 +1,3 @@
-import { capabilities } from '@/assembly/backend'
 import { connectionAccessor } from '@/assembly/connections'
 import { hiddenGroupMap, proxyMap } from '@/assembly/proxies'
 import { NOT_CONNECTED, PROXY_CHAIN_DIRECTION, PROXY_TYPE, ROUTE_NAME } from '@/constant'
@@ -14,6 +13,8 @@ import type { Connection } from '@/types'
 import * as ipaddr from 'ipaddr.js'
 import { computed } from 'vue'
 
+const PROXY_GROUP_TYPES = new Set<string>(Object.values(PROXY_TYPE))
+
 export const isProxyGroup = (name: string) => {
   const proxyNode = proxyMap.value[name]
 
@@ -25,19 +26,7 @@ export const isProxyGroup = (name: string) => {
     return true
   }
 
-  return [
-    PROXY_TYPE.Dns,
-    PROXY_TYPE.Compatible,
-    PROXY_TYPE.Direct,
-    PROXY_TYPE.Reject,
-    PROXY_TYPE.RejectDrop,
-    PROXY_TYPE.Pass,
-    PROXY_TYPE.Fallback,
-    PROXY_TYPE.URLTest,
-    PROXY_TYPE.LoadBalance,
-    PROXY_TYPE.Selector,
-    PROXY_TYPE.Smart,
-  ].includes(proxyNode.type.toLowerCase() as PROXY_TYPE)
+  return PROXY_GROUP_TYPES.has(proxyNode.type.toLowerCase())
 }
 
 // 以下 getConnectionXxx 均委托给 assembly 层「按当前后端动态选用」的访问器,
@@ -122,20 +111,13 @@ export const getColorForLatency = (latency: number) => {
   }
 }
 
-export const renderRoutes = computed(() => {
-  const caps = capabilities.value
-  // capability gate per route; routes not listed here are always shown
-  const routeCapable: Partial<Record<ROUTE_NAME, boolean>> = {
-    [ROUTE_NAME.rules]: caps.rules,
-    [ROUTE_NAME.tools]: caps.tools,
-  }
-  return Object.values(ROUTE_NAME).filter((r) => {
+export const renderRoutes = computed(() =>
+  Object.values(ROUTE_NAME).filter((r) => {
     if (r === ROUTE_NAME.setup) return false
     if (!splitOverviewPage.value && r === ROUTE_NAME.overview) return false
-    if (r in routeCapable && routeCapable[r] === false) return false
     return true
-  })
-})
+  }),
+)
 
 export const applyCustomThemes = () => {
   document.querySelectorAll('.custom-theme').forEach((style) => {
@@ -174,8 +156,9 @@ export const isHiddenGroup = (group: string) => {
   return proxyMap.value[group]?.hidden
 }
 
-export const handlerUpgradeSuccess = () => {
+export const handlerUpgradeSuccess = (key?: string) => {
   showNotification({
+    key,
     content: 'upgradeSuccess',
     type: 'alert-success',
   })

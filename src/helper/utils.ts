@@ -11,7 +11,9 @@ export const isPWA = (() => {
 })()
 
 export const prettyBytesHelper = (bytes: number, opts?: Options) => {
-  return prettyBytes(bytes, {
+  // prettyBytes 对 NaN / Infinity 是抛错的。格式化函数几乎全在渲染函数里调用,
+  // 一个脏字段抛出去就会毁掉整棵 vnode 树(而不只是这一格),故就地兜住。
+  return prettyBytes(Number.isFinite(bytes) ? bytes : 0, {
     binary: false,
     ...opts,
   })
@@ -70,16 +72,8 @@ export const getUrlFromBackend = (end: {
   return `${end.protocol}://${end.host}:${end.port}${end.secondaryPath || ''}`
 }
 
-// sing-box native 后端复用顶层连接字段作为 gRPC baseUrl(secondaryPath 留空)。
-export const getSingboxUrlFromBackend = (
-  end: Pick<Backend, 'type' | 'protocol' | 'host' | 'port'>,
-) => {
-  if (end.type !== 'singbox' || !end.host) return ''
-  return `${end.protocol}://${end.host}:${end.port}`
-}
-
-export const getSingboxSecret = (end: Pick<Backend, 'type' | 'password'>) =>
-  end.type === 'singbox' ? end.password || '' : ''
+// 探测 / 诊断打的那个地址:Clash REST 根路径。
+export const getBackendProbeUrl = (end: Omit<Backend, 'uuid'>) => getUrlFromBackend(end)
 
 export const getLabelFromBackend = (end: Omit<Backend, 'uuid'>) => {
   return end.label || `${end.host}:${end.port}`
@@ -96,13 +90,15 @@ export const scrollIntoCenter = (el: HTMLElement) => {
 
   if (!scrollableParent) return
 
-  const elRect = el.getBoundingClientRect()
-  const parentRect = scrollableParent.getBoundingClientRect()
-
-  if (elRect.top >= parentRect.top && elRect.bottom <= parentRect.bottom) return
-
   const parentTop = scrollableParent.offsetTop
   const childTop = el.offsetTop
+
+  // 判断可见性只能用布局位置(offsetTop),不能用 getBoundingClientRect:
+  // 列表重排时 TransitionGroup 的 FLIP 会给卡片挂 transform,rect 停在动画起点(旧位置,
+  // 通常还在视口内),会被误判成"已经可见"而跳过滚动。
+  const relativeTop = childTop - parentTop - scrollableParent.scrollTop
+
+  if (relativeTop >= 0 && relativeTop + el.clientHeight <= scrollableParent.clientHeight) return
 
   const centerOffset =
     childTop - parentTop - scrollableParent.clientHeight / 2 + el.clientHeight / 2
@@ -126,6 +122,23 @@ export const findScrollableParent = (el: HTMLElement | null): HTMLElement | null
   return parent ? findScrollableParent(parent) : null
 }
 
+// 新格式 protocol=http/https 优先,旧格式 http / https 标记参数仍保留兼容,最后兜底当前页面协议。
+const getProtocolFromQuery = (query: URLSearchParams) => {
+  const protocol = query.get('protocol')
+
+  if (protocol === 'http' || protocol === 'https') {
+    return protocol
+  }
+  if (query.get('http')) {
+    return 'http'
+  }
+  if (query.get('https')) {
+    return 'https'
+  }
+
+  return window.location.protocol.replace(':', '')
+}
+
 export const getBackendFromUrl = () => {
   const query = new URLSearchParams(
     window.location.search || location.hash.match(/\?.*$/)?.[0]?.replace('?', ''),
@@ -133,13 +146,8 @@ export const getBackendFromUrl = () => {
 
   if (query.has('hostname')) {
     return {
-      // 后端类型:'singbox' 走 sing-box native gRPC,其余(含缺省)按 'clash' 处理。
-      type: (query.get('type') === 'singbox' ? 'singbox' : 'clash') as BackendType,
-      protocol: query.get('http')
-        ? 'http'
-        : query.get('https')
-          ? 'https'
-          : window.location.protocol.replace(':', ''),
+      type: 'clash' as BackendType,
+      protocol: getProtocolFromQuery(query),
       secondaryPath: query.get('secondaryPath') || '',
       host: query.get('hostname') as string,
       port: query.get('port') as string,
