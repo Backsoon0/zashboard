@@ -2,7 +2,7 @@
 // ConnectionAccessor 直接从「原始数据」读取/派生 view 需要的字段。
 // createGetConnectionDisplayValue 基于该 accessor 生成 getConnectionDisplayValue,
 // 由 index.ts 门面暴露给 view。
-import { getGeoIPInfoSync } from '@/api/geoip'
+import { getConnectionGeoIPInfoSync } from '@/api/connectionGeoip'
 import { CONNECTIONS_TABLE_ACCESSOR_KEY, PROXY_CHAIN_DIRECTION } from '@/constant'
 import { getIPLabelFromMap } from '@/helper/sourceip'
 import { fromNow, prettyBytesHelper } from '@/helper/utils'
@@ -48,6 +48,7 @@ export interface ConnectionAccessor {
   inboundUser(connection: Connection): string
   sniffHost(connection: Connection): string
   remoteAddress(connection: Connection): string
+  isDirect(connection: Connection): boolean
   // smart 内核的降级标记;非 smart 时为 undefined。
   smartBlock(connection: Connection): string | undefined
 }
@@ -119,7 +120,9 @@ export const createGetConnectionDisplayValue =
       case CONNECTIONS_TABLE_ACCESSOR_KEY.DestinationType:
         return getDestinationType(accessor.destination(connection))
       case CONNECTIONS_TABLE_ACCESSOR_KEY.GeoIP: {
-        const { country, organization } = getGeoIPInfoSync(accessor.destination(connection))
+        const { country, organization } = getConnectionGeoIPInfoSync(
+          accessor.destination(connection),
+        )
 
         return [country, organization].filter(Boolean).join(' / ')
       }

@@ -2,6 +2,46 @@
 
 # Changelog
 
+## [3.25.0](https://github.com/Zephyruso/zashboard/compare/v3.24.0...v3.25.0) (2026-08-31)
+
+
+### Features
+
+* support custom CSS in panel settings ([1da5989](https://github.com/Zephyruso/zashboard/commit/1da5989dfdac6331f6b56ddd8c0aaef3854a37b4))
+
+
+### Bug Fixes
+
+* navigate to proxies before syncing settings on first login ([f6dd9c0](https://github.com/Zephyruso/zashboard/commit/f6dd9c07e843ab89632cc373522254a1bfe6bbe5))
+
+## [3.24.0](https://github.com/Zephyruso/zashboard/compare/v3.23.0...v3.24.0) (2026-08-28)
+
+
+### Features
+
+* add endpoint legend with color coding and update translations ([eee0252](https://github.com/Zephyruso/zashboard/commit/eee0252ae74827f576cb0038df511b8b86e0f29b))
+* add expand/collapse all button for grouped connection cards ([234b93f](https://github.com/Zephyruso/zashboard/commit/234b93ff5a68e1726e0f309064c5519206462a50))
+* add grouping functionality for connection cards and enhance internationalization support ([d210f59](https://github.com/Zephyruso/zashboard/commit/d210f59378c57e08b7462864457ddd566ed18319)), closes [#759](https://github.com/Zephyruso/zashboard/issues/759)
+* enhance map zoom behavior and camera positioning for 2D projection ([40e68c2](https://github.com/Zephyruso/zashboard/commit/40e68c2ccd42935d7ebaee726aa0bdf3106128cb))
+* enhance sorting functionality with natural order and internationalization support ([4822fa3](https://github.com/Zephyruso/zashboard/commit/4822fa31924fbf33215546bff17c11e82a564d24))
+* implement swipe gesture handling for modal dialog with transition effects ([710e08b](https://github.com/Zephyruso/zashboard/commit/710e08b64813302a1fd56098d630130302aadd4b))
+
+## [3.23.0](https://github.com/Zephyruso/zashboard/compare/v3.22.0...v3.23.0) (2026-08-26)
+
+
+### Features
+
+* add Earth projection functionality and related utilities ([cc2e235](https://github.com/Zephyruso/zashboard/commit/cc2e235fab23c21de3738e8fdec8855119e5ae69)), closes [#769](https://github.com/Zephyruso/zashboard/issues/769)
+* add HonkStats integration and related UI components ([1f6ba40](https://github.com/Zephyruso/zashboard/commit/1f6ba40854fca8ee5c0442b860f41b57878a6d33))
+* enhance routing and endpoint handling with direct connection support ([5d3cc03](https://github.com/Zephyruso/zashboard/commit/5d3cc036b2598fc7d41d106b6f913a14402e91c1))
+* implement action pending notifications and enhance error handling ([da5cf23](https://github.com/Zephyruso/zashboard/commit/da5cf23fda8c969897224b2dcc21ff99fa0c5c97))
+* remove sing-box support and related code ([4adb487](https://github.com/Zephyruso/zashboard/commit/4adb4872d90c8ec1b8bfab4b43308cdb2da12c3e))
+
+
+### Bug Fixes
+
+* update viewport handling and dialog dimensions for better keyboard support ([615506f](https://github.com/Zephyruso/zashboard/commit/615506fc093832ab3e2572d03e610e72594abec7))
+
 ## [3.22.0](https://github.com/Zephyruso/zashboard/compare/v3.21.0...v3.22.0) (2026-08-24)
 
 

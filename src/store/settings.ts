@@ -189,6 +189,7 @@ export const emoji = useStorage<EMOJIS>(
   IS_APPLE_DEVICE ? EMOJIS.TWEMOJI : EMOJIS.NOTO_COLOR_EMOJI,
 )
 export const customBackgroundURL = useStorage('config/custom-background-image', '')
+export const customCSS = useStorage('config/custom-css', '')
 export const dashboardTransparent = useStorage('config/dashboard-transparent', 90)
 export const autoUpgradeDashboard = useStorage('config/auto-upgrade', false)
 export const checkUpgradeCore = useStorage('config/check-upgrade-core', true)
@@ -300,6 +301,7 @@ if (missingCards.length > 0) {
 
 export const earthIPInfoAPI = useStorage<IP_INFO_API>('config/earth-ip-info-api', IP_INFO_API.IPIP)
 export const earthVisualMode = useStorage<'flat' | 'space'>('config/earth-visual-mode', 'flat')
+export const earthProjection = useStorage<'3d' | '2d'>('config/earth-projection', '3d')
 export const topologyApplyConnectionFilter = useStorage(
   'config/topology-apply-connection-filter',
   true,
